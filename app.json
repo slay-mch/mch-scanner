@@ -2,7 +2,7 @@
   "expo": {
     "name": "MCH Scanner",
     "slug": "mch-scanner",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -14,9 +14,10 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "co.myclubhaus.scanner",
-      "buildNumber": "1",
+      "buildNumber": "2",
+      "deploymentTarget": "16.0",
       "infoPlist": {
-        "NSCameraUsageDescription": "MCH Scanner uses your camera to measure your room for golf simulator setup.",
+        "NSCameraUsageDescription": "MCH Scanner uses your camera and LiDAR sensor to measure your room for golf simulator setup.",
         "NSLocationWhenInUseUsageDescription": "Not used."
       }
     },
@@ -24,8 +25,11 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "MCH Scanner uses your camera to measure your room."
+          "cameraPermission": "MCH Scanner uses your camera to scan your room."
         }
+      ],
+      [
+        "./modules/room-plan"
       ]
     ],
     "extra": {
