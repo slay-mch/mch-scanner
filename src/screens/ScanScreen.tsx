@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import {
   View,
   Text,
@@ -14,14 +14,6 @@ import RoomPlanModule, { RoomDimensions } from '../../modules/room-plan/index';
 
 export default function ScanScreen() {
   const navigation = useNavigation<any>();
-  const listenerRef = useRef<any>(null);
-  const errorListenerRef = useRef<any>(null);
-
-  useEffect(() => {
-    return () => {
-      // Cleanup listeners on unmount
-    };
-  }, []);
 
   const startScan = () => {
     if (Platform.OS !== 'ios') {
@@ -29,7 +21,11 @@ export default function ScanScreen() {
       return;
     }
 
-    // Listen for scan completion
+    if (!RoomPlanModule) {
+      Alert.alert('Module Unavailable', 'RoomPlanModule native module is not registered. Check build logs.');
+      return;
+    }
+
     const completeListener = RoomPlanModule.addListener('onScanComplete', (dims: RoomDimensions) => {
       completeListener?.remove?.();
       errorListener?.remove?.();
@@ -50,11 +46,17 @@ export default function ScanScreen() {
   return (
     <SafeAreaView style={styles.container}>
       <StatusBar barStyle="light-content" />
-      
+
       <View style={styles.header}>
         <Text style={styles.logo}>MCH</Text>
         <Text style={styles.tagline}>Room Scanner</Text>
       </View>
+
+      {!RoomPlanModule && (
+        <View style={styles.warningBanner}>
+          <Text style={styles.warningText}>⚠️ RoomPlanModule not registered — tap Start to see error details</Text>
+        </View>
+      )}
 
       <View style={styles.content}>
         <View style={styles.scanFrame}>
@@ -86,6 +88,8 @@ const styles = StyleSheet.create({
   header: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 8 },
   logo: { fontSize: 28, fontWeight: '800', color: '#4ade80', letterSpacing: 2 },
   tagline: { fontSize: 14, color: '#6b7280', marginTop: 2 },
+  warningBanner: { backgroundColor: '#7c2d12', marginHorizontal: 16, borderRadius: 8, padding: 12, marginBottom: 8 },
+  warningText: { color: '#fca5a5', fontSize: 12, textAlign: 'center' },
   content: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 },
   scanFrame: {
     alignItems: 'center',
