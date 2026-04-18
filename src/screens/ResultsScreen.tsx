@@ -6,9 +6,11 @@ import {
   SafeAreaView,
   TouchableOpacity,
   StatusBar,
+  ScrollView,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { RoomDimensions } from '../../modules/room-plan/index';
+import FloorPlanSVG from '../components/FloorPlanSVG';
 
 export default function ResultsScreen() {
   const route = useRoute<any>();
@@ -36,25 +38,36 @@ export default function ResultsScreen() {
         <Text style={styles.tagline}>Scan Complete</Text>
       </View>
 
-      <View style={styles.content}>
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
         <Text style={styles.sectionTitle}>Your Room Dimensions</Text>
 
-        <View style={styles.card}>
-          <DimRow label="Width" value={dimensions.widthFt} />
-          <View style={styles.divider} />
-          <DimRow label="Length" value={dimensions.lengthFt} />
-          <View style={styles.divider} />
-          <DimRow label="Ceiling Height" value={dimensions.heightFt} />
+        {/* 2D Floor Plan SVG */}
+        <View style={styles.floorPlanWrapper}>
+          <FloorPlanSVG
+            widthFt={dimensions.widthFt}
+            lengthFt={dimensions.lengthFt}
+          />
+        </View>
+
+        {/* Stats chips row */}
+        <View style={styles.chipsRow}>
+          <StatChip label="Width" value={dimensions.widthFt} />
+          <StatChip label="Length" value={dimensions.lengthFt} />
+          <StatChip label="Height" value={dimensions.heightFt} />
         </View>
 
         <Text style={styles.note}>
-          ℹ️ These measurements are approximate. Verify with a tape measure before purchasing.
+          \u2139\ufe0f These measurements are approximate. Verify with a tape measure before purchasing.
         </Text>
-      </View>
+      </ScrollView>
 
       <View style={styles.footer}>
         <TouchableOpacity style={styles.primaryButton} onPress={sendToMCH}>
-          <Text style={styles.primaryButtonText}>Send to MyClubHaus →</Text>
+          <Text style={styles.primaryButtonText}>Send to MyClubHaus \u2192</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.goBack()}>
           <Text style={styles.secondaryButtonText}>Scan Again</Text>
@@ -64,40 +77,72 @@ export default function ResultsScreen() {
   );
 }
 
-function DimRow({ label, value }: { label: string; value: number }) {
+interface StatChipProps {
+  label: string;
+  value: number;
+}
+
+function StatChip({ label, value }: StatChipProps) {
   return (
-    <View style={styles.dimRow}>
-      <Text style={styles.dimLabel}>{label}</Text>
-      <Text style={styles.dimValue}>{value > 0 ? `${value} ft` : '—'}</Text>
+    <View style={chipStyles.chip}>
+      <Text style={chipStyles.label}>{label}</Text>
+      <Text style={chipStyles.value}>
+        {value > 0 ? `${value.toFixed(1)} ft` : '\u2014'}
+      </Text>
     </View>
   );
 }
+
+const chipStyles = StyleSheet.create({
+  chip: {
+    flex: 1,
+    backgroundColor: '#111f16',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#1f3a26',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    alignItems: 'center',
+    marginHorizontal: 4,
+  },
+  label: {
+    fontSize: 11,
+    color: '#6b7280',
+    fontWeight: '600',
+    letterSpacing: 0.5,
+    marginBottom: 4,
+    textTransform: 'uppercase',
+  },
+  value: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#4ade80',
+  },
+});
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#0f1f14' },
   header: { paddingHorizontal: 24, paddingTop: 16, paddingBottom: 8 },
   logo: { fontSize: 28, fontWeight: '800', color: '#4ade80', letterSpacing: 2 },
   tagline: { fontSize: 14, color: '#6b7280', marginTop: 2 },
-  content: { flex: 1, paddingHorizontal: 24, paddingTop: 32 },
+  scrollView: { flex: 1 },
+  content: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 16 },
   sectionTitle: { fontSize: 18, fontWeight: '700', color: '#f9fafb', marginBottom: 20 },
-  card: {
-    backgroundColor: '#111f16',
+  floorPlanWrapper: {
+    backgroundColor: '#0a1a0f',
     borderRadius: 16,
     borderWidth: 1,
     borderColor: '#1f3a26',
-    overflow: 'hidden',
-  },
-  dimRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+    padding: 16,
     alignItems: 'center',
-    paddingHorizontal: 20,
-    paddingVertical: 18,
+    marginBottom: 20,
   },
-  dimLabel: { fontSize: 16, color: '#9ca3af' },
-  dimValue: { fontSize: 20, fontWeight: '700', color: '#4ade80' },
-  divider: { height: 1, backgroundColor: '#1f3a26', marginHorizontal: 20 },
-  note: { fontSize: 13, color: '#6b7280', marginTop: 20, lineHeight: 20 },
+  chipsRow: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    marginHorizontal: -4,
+  },
+  note: { fontSize: 13, color: '#6b7280', lineHeight: 20 },
   footer: { paddingHorizontal: 24, paddingBottom: 32 },
   primaryButton: {
     backgroundColor: '#4ade80',
