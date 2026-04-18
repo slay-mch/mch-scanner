@@ -13,14 +13,11 @@ class MCHRoomScannerViewController: UIViewController, RoomCaptureViewDelegate, R
   var onError: ((String) -> Void)?
   
   private var roomCaptureView: RoomCaptureView!
-  private var roomCaptureSession: RoomCaptureSession!
   private var captureConfiguration = RoomCaptureSession.Configuration()
-  private var finalRoom: CapturedRoom?
   
   override func viewDidLoad() {
     super.viewDidLoad()
     view.backgroundColor = UIColor(red: 0.06, green: 0.12, blue: 0.08, alpha: 1.0)
-    
     setupRoomCaptureView()
     setupDoneButton()
     setupCancelButton()
@@ -100,17 +97,18 @@ class MCHRoomScannerViewController: UIViewController, RoomCaptureViewDelegate, R
       return
     }
     
-    let structure = try? RoomBuilder(options: [.beautifyObjects]).capturedRoom(from: data)
-    
-    DispatchQueue.main.async {
-      self.dismiss(animated: true) {
-        if let room = structure {
-          let dims = self.extractDimensions(from: room)
-          self.onComplete?(dims)
-        } else {
-          // Fallback: extract from raw data floors/walls
-          let dims = self.extractDimensionsFromData(data)
-          self.onComplete?(dims)
+    Task {
+      let structure = try? await RoomBuilder(options: [.beautifyObjects]).capturedRoom(from: data)
+      
+      await MainActor.run {
+        self.dismiss(animated: true) {
+          if let room = structure {
+            let dims = self.extractDimensions(from: room)
+            self.onComplete?(dims)
+          } else {
+            let dims = self.extractDimensionsFromData(data)
+            self.onComplete?(dims)
+          }
         }
       }
     }
@@ -119,27 +117,38 @@ class MCHRoomScannerViewController: UIViewController, RoomCaptureViewDelegate, R
   private func extractDimensions(from room: CapturedRoom) -> RoomDimensions {
     let metersToFeet = 3.28084
     
-    // Get floor dimensions
-    let floors = room.floors
     var maxWidth: Double = 0
     var maxLength: Double = 0
     
-    for floor in floors {
-      let w = Double(floor.dimensions.x) * metersToFeet
-      let l = Double(floor.dimensions.y) * metersToFeet
-      maxWidth = max(maxWidth, w)
-      maxLength = max(maxLength, l)
+    if #available(iOS 17.0, *) {
+      for floor in room.floors {
+        let w = Double(floor.dimensions.x) * metersToFeet
+        let l = Double(floor.dimensions.y) * metersToFeet
+        maxWidth = max(maxWidth, w)
+        maxLength = max(maxLength, l)
+      }
     }
     
-    // Get ceiling height from walls
-    let walls = room.walls
+    // Fall back to walls if floors gave nothing
+    if maxWidth < 1 {
+      for wall in room.walls {
+        let w = Double(wall.dimensions.x) * metersToFeet
+        maxWidth = max(maxWidth, w)
+      }
+    }
+    if maxLength < 1 {
+      for wall in room.walls {
+        let l = Double(wall.dimensions.x) * metersToFeet
+        maxLength = max(maxLength, l)
+      }
+    }
+    
     var maxHeight: Double = 0
-    for wall in walls {
+    for wall in room.walls {
       let h = Double(wall.dimensions.y) * metersToFeet
       maxHeight = max(maxHeight, h)
     }
     
-    // Fallback defaults if extraction failed
     if maxWidth < 1 { maxWidth = 10 }
     if maxLength < 1 { maxLength = 12 }
     if maxHeight < 1 { maxHeight = 9 }
@@ -152,7 +161,6 @@ class MCHRoomScannerViewController: UIViewController, RoomCaptureViewDelegate, R
   }
   
   private func extractDimensionsFromData(_ data: CapturedRoomData) -> RoomDimensions {
-    // Fallback: return reasonable defaults if structure extraction fails
     return RoomDimensions(widthFt: 10.0, lengthFt: 12.0, heightFt: 9.0)
   }
   
