@@ -30,8 +30,9 @@
     ],
     "extra": {
       "eas": {
-        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+        "projectId": "6fdd8d6d-5544-456e-873f-6ec724b7a5e8"
       }
-    }
+    },
+    "owner": "slayh"
   }
 }
