@@ -6,6 +6,7 @@ export interface RoomDimensions {
   widthFt: number;
   lengthFt: number;
   heightFt: number;
+  usdzPath?: string;
 }
 
 let _emitter: NativeEventEmitter | null = null;

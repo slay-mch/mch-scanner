@@ -44,12 +44,14 @@ RCT_EXPORT_METHOD(startScan) {
 
 // MARK: - RoomPlanDelegate
 
-- (void)didCompleteWithWidth:(double)widthFt length:(double)lengthFt height:(double)heightFt {
-  [self sendEventWithName:@"onScanComplete" body:@{
+- (void)didCompleteWithWidth:(double)widthFt length:(double)lengthFt height:(double)heightFt usdzPath:(NSString * _Nullable)usdzPath {
+  NSMutableDictionary *body = [@{
     @"widthFt": @(widthFt),
     @"lengthFt": @(lengthFt),
-    @"heightFt": @(heightFt)
-  }];
+    @"heightFt": @(heightFt),
+  } mutableCopy];
+  if (usdzPath) body[@"usdzPath"] = usdzPath;
+  [self sendEventWithName:@"onScanComplete" body:body];
 }
 
 - (void)didFailWithError:(NSString *)message {

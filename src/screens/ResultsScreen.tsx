@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   StatusBar,
   ScrollView,
+  Linking,
 } from 'react-native';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { RoomDimensions } from '../../modules/room-plan/index';
@@ -25,13 +26,40 @@ export default function ResultsScreen() {
   };
 
   const [activeTab, setActiveTab] = useState<ViewTab>('2D Plan');
+  const [sending, setSending] = useState(false);
 
-  const sendToMCH = () => {
-    // Session 5: Deep link to mch-agent-platform quiz with dimensions pre-filled
-    // URL: https://mch-agent-platform.vercel.app/quiz?source=scanner&width=X&length=Y&height=Z
-    const url = `https://mch-agent-platform.vercel.app/quiz?source=scanner&width=${dimensions.widthFt}&length=${dimensions.lengthFt}&height=${dimensions.heightFt}`;
-    // Linking.openURL(url) — wired in Session 5
-    alert(`Ready to send: ${url}`);
+  const sendToMCH = async () => {
+    setSending(true);
+    try {
+      const formData = new FormData();
+      formData.append('width_ft', String(dimensions.widthFt));
+      formData.append('length_ft', String(dimensions.lengthFt));
+      formData.append('height_ft', String(dimensions.heightFt));
+
+      // Attach .usdz if available
+      if (dimensions.usdzPath) {
+        formData.append('usdz_file', {
+          uri: `file://${dimensions.usdzPath}`,
+          type: 'model/vnd.usdz+zip',
+          name: 'room.usdz',
+        } as any);
+      }
+
+      const res = await fetch('https://mch-agent-platform.vercel.app/api/room-scan', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const { scan_id } = await res.json();
+
+      // Build deep link URL — Session 6 will have the app open to quiz step 1
+      const url = `https://mch-agent-platform.vercel.app/quiz?source=scanner&scan_id=${scan_id}&width=${dimensions.widthFt}&length=${dimensions.lengthFt}&height=${dimensions.heightFt}`;
+      await Linking.openURL(url);
+    } catch (err) {
+      alert('Could not send scan. Please try again.');
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -103,8 +131,14 @@ export default function ResultsScreen() {
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity style={styles.primaryButton} onPress={sendToMCH}>
-          <Text style={styles.primaryButtonText}>Send to MyClubHaus \u2192</Text>
+        <TouchableOpacity
+          style={[styles.primaryButton, sending && { opacity: 0.6 }]}
+          onPress={sendToMCH}
+          disabled={sending}
+        >
+          <Text style={styles.primaryButtonText}>
+            {sending ? 'Sending\u2026' : 'Send to MyClubHaus \u2192'}
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.goBack()}>
           <Text style={styles.secondaryButtonText}>Scan Again</Text>

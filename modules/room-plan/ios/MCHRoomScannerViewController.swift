@@ -91,15 +91,34 @@ import RoomPlan
     }
     
     Task {
-      let structure = try? await RoomBuilder(options: [.beautifyObjects]).capturedRoom(from: data)
-      
-      await MainActor.run {
-        self.dismiss(animated: true) {
-          if let room = structure {
-            let (w, l, h) = self.extractDimensions(from: room)
-            self.delegate?.didCompleteWithWidth(w, length: l, height: h)
-          } else {
-            self.delegate?.didCompleteWithWidth(10.0, length: 12.0, height: 9.0)
+      do {
+        let room = try await RoomBuilder(options: [.beautifyObjects]).capturedRoom(from: data)
+        let (widthFt, lengthFt, heightFt) = self.extractDimensions(from: room)
+        
+        // Export .usdz to temp directory
+        let tempURL = FileManager.default.temporaryDirectory
+          .appendingPathComponent(UUID().uuidString)
+          .appendingPathExtension("usdz")
+        do {
+          try await room.export(to: tempURL)
+          await MainActor.run {
+            self.dismiss(animated: true) {
+              self.delegate?.didCompleteWithWidth(widthFt, length: lengthFt, height: heightFt, usdzPath: tempURL.path)
+            }
+          }
+        } catch {
+          // Export failed — still send dimensions without usdz
+          await MainActor.run {
+            self.dismiss(animated: true) {
+              self.delegate?.didCompleteWithWidth(widthFt, length: lengthFt, height: heightFt, usdzPath: nil)
+            }
+          }
+        }
+      } catch {
+        // RoomBuilder failed — use fallback dimensions
+        await MainActor.run {
+          self.dismiss(animated: true) {
+            self.delegate?.didCompleteWithWidth(10.0, length: 12.0, height: 9.0, usdzPath: nil)
           }
         }
       }
