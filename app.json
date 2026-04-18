@@ -1,0 +1,37 @@
+{
+  "expo": {
+    "name": "MCH Scanner",
+    "slug": "mch-scanner",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "dark",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1a4a2e"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "co.myclubhaus.scanner",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "MCH Scanner uses your camera to measure your room for golf simulator setup.",
+        "NSLocationWhenInUseUsageDescription": "Not used."
+      }
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "MCH Scanner uses your camera to measure your room."
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "REPLACE_WITH_EAS_PROJECT_ID"
+      }
+    }
+  }
+}
