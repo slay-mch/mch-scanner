@@ -3,7 +3,7 @@ require 'json'
 package = JSON.parse(File.read(File.join(__dir__, 'package.json')))
 
 Pod::Spec.new do |s|
-  s.name           = 'room-plan'
+  s.name           = 'RoomPlanModule'
   s.version        = package['version'] || '1.0.0'
   s.summary        = 'MCH RoomPlan native module for room scanning'
   s.description    = 'Custom Expo module wrapping Apple RoomPlan LiDAR scanning API'
@@ -14,6 +14,6 @@ Pod::Spec.new do |s|
   s.source         = { :path => '.' }
   s.source_files   = 'ios/**/*.swift'
   s.frameworks     = 'RoomPlan', 'ARKit', 'SceneKit'
-  
+
   s.dependency 'ExpoModulesCore'
 end
