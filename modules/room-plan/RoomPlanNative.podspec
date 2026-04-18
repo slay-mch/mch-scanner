@@ -8,7 +8,7 @@ Pod::Spec.new do |s|
   s.platform     = :ios, '17.0'
   s.source       = { :path => '.' }
   s.source_files = 'ios/**/*.{swift,m,h}'
-  s.frameworks   = 'RoomPlan'
+  s.frameworks   = ['RoomPlan', 'SceneKit']
   s.dependency 'React-Core'
   s.pod_target_xcconfig = {
     'SWIFT_VERSION' => '5.0'

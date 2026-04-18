@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,9 @@ import {
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { RoomDimensions } from '../../modules/room-plan/index';
 import FloorPlanSVG from '../components/FloorPlanSVG';
+import Room3DView from '../components/Room3DView';
+
+type ViewTab = '2D Plan' | '3D View';
 
 export default function ResultsScreen() {
   const route = useRoute<any>();
@@ -20,6 +23,8 @@ export default function ResultsScreen() {
     lengthFt: 0,
     heightFt: 0,
   };
+
+  const [activeTab, setActiveTab] = useState<ViewTab>('2D Plan');
 
   const sendToMCH = () => {
     // Session 5: Deep link to mch-agent-platform quiz with dimensions pre-filled
@@ -45,12 +50,44 @@ export default function ResultsScreen() {
       >
         <Text style={styles.sectionTitle}>Your Room Dimensions</Text>
 
-        {/* 2D Floor Plan SVG */}
+        {/* 2D / 3D tab toggle */}
+        <View style={styles.tabBar}>
+          {(['2D Plan', '3D View'] as ViewTab[]).map((tab) => (
+            <TouchableOpacity
+              key={tab}
+              style={[
+                styles.tabButton,
+                activeTab === tab && styles.tabButtonActive,
+              ]}
+              onPress={() => setActiveTab(tab)}
+            >
+              <Text
+                style={[
+                  styles.tabButtonText,
+                  activeTab === tab && styles.tabButtonTextActive,
+                ]}
+              >
+                {tab}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* Floor plan card */}
         <View style={styles.floorPlanWrapper}>
-          <FloorPlanSVG
-            widthFt={dimensions.widthFt}
-            lengthFt={dimensions.lengthFt}
-          />
+          {activeTab === '2D Plan' ? (
+            <FloorPlanSVG
+              widthFt={dimensions.widthFt}
+              lengthFt={dimensions.lengthFt}
+            />
+          ) : (
+            <Room3DView
+              widthFt={dimensions.widthFt}
+              lengthFt={dimensions.lengthFt}
+              heightFt={dimensions.heightFt}
+              style={{ width: '100%', height: 280 }}
+            />
+          )}
         </View>
 
         {/* Stats chips row */}
@@ -127,7 +164,33 @@ const styles = StyleSheet.create({
   tagline: { fontSize: 14, color: '#6b7280', marginTop: 2 },
   scrollView: { flex: 1 },
   content: { paddingHorizontal: 24, paddingTop: 24, paddingBottom: 16 },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#f9fafb', marginBottom: 20 },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: '#f9fafb', marginBottom: 16 },
+  tabBar: {
+    flexDirection: 'row',
+    backgroundColor: '#111f16',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#1f3a26',
+    padding: 4,
+    marginBottom: 16,
+  },
+  tabButton: {
+    flex: 1,
+    paddingVertical: 8,
+    alignItems: 'center',
+    borderRadius: 8,
+  },
+  tabButtonActive: {
+    backgroundColor: '#4ade80',
+  },
+  tabButtonText: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#6b7280',
+  },
+  tabButtonTextActive: {
+    color: '#0f1f14',
+  },
   floorPlanWrapper: {
     backgroundColor: '#0a1a0f',
     borderRadius: 16,
@@ -136,6 +199,7 @@ const styles = StyleSheet.create({
     padding: 16,
     alignItems: 'center',
     marginBottom: 20,
+    overflow: 'hidden',
   },
   chipsRow: {
     flexDirection: 'row',
