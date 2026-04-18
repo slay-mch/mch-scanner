@@ -1,119 +1,61 @@
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  SafeAreaView,
-  StatusBar,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 
-export default function ScanScreen() {
+export default function ScanScreen({ navigation }: any) {
   return (
-    <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="light-content" />
-      
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.logo}>MCH</Text>
-        <Text style={styles.tagline}>Room Scanner</Text>
-      </View>
-
-      {/* Main content */}
-      <View style={styles.content}>
-        <View style={styles.scanFrame}>
-          <Text style={styles.scanIcon}>📐</Text>
-          <Text style={styles.scanTitle}>Ready to Scan</Text>
-          <Text style={styles.scanDescription}>
-            Point your phone around the room. LiDAR will map your walls, ceiling, and floor automatically.
-          </Text>
-        </View>
-      </View>
-
-      {/* CTA */}
-      <View style={styles.footer}>
-        <TouchableOpacity style={styles.scanButton} onPress={() => {}}>
-          <Text style={styles.scanButtonText}>Start Scanning</Text>
-        </TouchableOpacity>
-        <Text style={styles.disclaimer}>
-          Requires iPhone 12 Pro or later with LiDAR sensor
-        </Text>
-      </View>
-    </SafeAreaView>
+    <View style={styles.container}>
+      <Text style={styles.logo}>MCH Scanner</Text>
+      <Text style={styles.subtitle}>Golf Simulator Room Scanner</Text>
+      <TouchableOpacity
+        style={styles.button}
+        onPress={() => navigation.navigate('Results', {
+          width: 0,
+          length: 0,
+          height: 0,
+        })}
+      >
+        <Text style={styles.buttonText}>Start Scan</Text>
+      </TouchableOpacity>
+      <Text style={styles.note}>LiDAR scanning coming in Session 2</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0f1f14',
-  },
-  header: {
-    paddingHorizontal: 24,
-    paddingTop: 16,
-    paddingBottom: 8,
+    backgroundColor: '#1a4a2e',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 24,
   },
   logo: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#4ade80',
-    letterSpacing: 2,
-  },
-  tagline: {
-    fontSize: 14,
-    color: '#6b7280',
-    marginTop: 2,
-  },
-  content: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    paddingHorizontal: 32,
-  },
-  scanFrame: {
-    alignItems: 'center',
-    padding: 32,
-    borderWidth: 1,
-    borderColor: '#1f3a26',
-    borderRadius: 16,
-    backgroundColor: '#111f16',
-    width: '100%',
-  },
-  scanIcon: {
-    fontSize: 48,
-    marginBottom: 16,
-  },
-  scanTitle: {
-    fontSize: 22,
+    fontSize: 32,
     fontWeight: '700',
-    color: '#f9fafb',
-    marginBottom: 12,
+    color: '#ffffff',
+    marginBottom: 8,
   },
-  scanDescription: {
-    fontSize: 15,
-    color: '#9ca3af',
+  subtitle: {
+    fontSize: 16,
+    color: '#a3c4a8',
+    marginBottom: 48,
     textAlign: 'center',
-    lineHeight: 22,
   },
-  footer: {
-    paddingHorizontal: 24,
-    paddingBottom: 32,
-  },
-  scanButton: {
+  button: {
     backgroundColor: '#4ade80',
-    borderRadius: 12,
+    paddingHorizontal: 40,
     paddingVertical: 16,
-    alignItems: 'center',
-    marginBottom: 12,
+    borderRadius: 12,
+    marginBottom: 24,
   },
-  scanButtonText: {
-    fontSize: 17,
+  buttonText: {
+    color: '#1a4a2e',
+    fontSize: 18,
     fontWeight: '700',
-    color: '#0f1f14',
   },
-  disclaimer: {
-    fontSize: 12,
-    color: '#6b7280',
+  note: {
+    fontSize: 13,
+    color: '#6b9e73',
     textAlign: 'center',
   },
 });
