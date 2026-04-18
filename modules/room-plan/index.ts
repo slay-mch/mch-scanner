@@ -1,16 +1,31 @@
-import { NativeModule, requireOptionalNativeModule } from 'expo-modules-core';
+import { NativeModules, NativeEventEmitter, Platform } from 'react-native';
 
-declare class RoomPlanModuleType extends NativeModule {
-  startScan(): void;
-  addListener(eventName: string, listener: (event: any) => void): any;
-  removeListeners(count: number): void;
-}
+const { RoomPlanNative } = NativeModules;
 
-const RoomPlanModule = requireOptionalNativeModule<RoomPlanModuleType>('RoomPlanModule');
-
-export default RoomPlanModule;
-export type RoomDimensions = {
+export interface RoomDimensions {
   widthFt: number;
   lengthFt: number;
   heightFt: number;
-};
+}
+
+let _emitter: NativeEventEmitter | null = null;
+
+function getEmitter(): NativeEventEmitter | null {
+  if (!RoomPlanNative) return null;
+  if (!_emitter) _emitter = new NativeEventEmitter(RoomPlanNative);
+  return _emitter;
+}
+
+const RoomPlanModule = RoomPlanNative
+  ? {
+      startScan: (): void => RoomPlanNative.startScan(),
+      addListener: (event: string, callback: (data: any) => void): { remove: () => void } => {
+        const emitter = getEmitter();
+        if (!emitter) return { remove: () => {} };
+        const sub = emitter.addListener(event, callback);
+        return { remove: () => sub.remove() };
+      },
+    }
+  : null;
+
+export default RoomPlanModule;

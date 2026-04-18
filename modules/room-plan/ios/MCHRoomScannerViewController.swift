@@ -1,21 +1,14 @@
 import UIKit
 import RoomPlan
 
-struct RoomDimensions {
-  let widthFt: Double
-  let lengthFt: Double
-  let heightFt: Double
-}
-
-class MCHRoomScannerViewController: UIViewController, RoomCaptureViewDelegate, RoomCaptureSessionDelegate {
+@objc public class MCHRoomScannerViewController: UIViewController, RoomCaptureViewDelegate, RoomCaptureSessionDelegate {
   
-  var onComplete: ((RoomDimensions) -> Void)?
-  var onError: ((String) -> Void)?
+  @objc public weak var delegate: RoomPlanDelegate?
   
   private var roomCaptureView: RoomCaptureView!
   private var captureConfiguration = RoomCaptureSession.Configuration()
   
-  override func viewDidLoad() {
+  public override func viewDidLoad() {
     super.viewDidLoad()
     view.backgroundColor = UIColor(red: 0.06, green: 0.12, blue: 0.08, alpha: 1.0)
     setupRoomCaptureView()
@@ -64,12 +57,12 @@ class MCHRoomScannerViewController: UIViewController, RoomCaptureViewDelegate, R
     ])
   }
   
-  override func viewWillAppear(_ animated: Bool) {
+  public override func viewWillAppear(_ animated: Bool) {
     super.viewWillAppear(animated)
     roomCaptureView.captureSession.run(configuration: captureConfiguration)
   }
   
-  override func viewWillDisappear(_ animated: Bool) {
+  public override func viewWillDisappear(_ animated: Bool) {
     super.viewWillDisappear(animated)
     roomCaptureView.captureSession.stop()
   }
@@ -81,17 +74,17 @@ class MCHRoomScannerViewController: UIViewController, RoomCaptureViewDelegate, R
   @objc private func cancelTapped() {
     roomCaptureView.captureSession.stop()
     dismiss(animated: true) {
-      self.onError?("cancelled")
+      self.delegate?.didFailWithError("cancelled")
     }
   }
   
   // MARK: - RoomCaptureSessionDelegate
   
-  func captureSession(_ session: RoomCaptureSession, didEndWith data: CapturedRoomData, error: Error?) {
+  public func captureSession(_ session: RoomCaptureSession, didEndWith data: CapturedRoomData, error: Error?) {
     if let error = error {
       DispatchQueue.main.async {
         self.dismiss(animated: true) {
-          self.onError?(error.localizedDescription)
+          self.delegate?.didFailWithError(error.localizedDescription)
         }
       }
       return
@@ -103,18 +96,17 @@ class MCHRoomScannerViewController: UIViewController, RoomCaptureViewDelegate, R
       await MainActor.run {
         self.dismiss(animated: true) {
           if let room = structure {
-            let dims = self.extractDimensions(from: room)
-            self.onComplete?(dims)
+            let (w, l, h) = self.extractDimensions(from: room)
+            self.delegate?.didCompleteWithWidth(w, length: l, height: h)
           } else {
-            let dims = self.extractDimensionsFromData(data)
-            self.onComplete?(dims)
+            self.delegate?.didCompleteWithWidth(10.0, length: 12.0, height: 9.0)
           }
         }
       }
     }
   }
   
-  private func extractDimensions(from room: CapturedRoom) -> RoomDimensions {
+  private func extractDimensions(from room: CapturedRoom) -> (Double, Double, Double) {
     let metersToFeet = 3.28084
     
     var maxWidth: Double = 0
@@ -129,7 +121,6 @@ class MCHRoomScannerViewController: UIViewController, RoomCaptureViewDelegate, R
       }
     }
     
-    // Fall back to walls if floors gave nothing
     if maxWidth < 1 {
       for wall in room.walls {
         let w = Double(wall.dimensions.x) * metersToFeet
@@ -153,18 +144,14 @@ class MCHRoomScannerViewController: UIViewController, RoomCaptureViewDelegate, R
     if maxLength < 1 { maxLength = 12 }
     if maxHeight < 1 { maxHeight = 9 }
     
-    return RoomDimensions(
-      widthFt: (maxWidth * 10).rounded() / 10,
-      lengthFt: (maxLength * 10).rounded() / 10,
-      heightFt: (maxHeight * 10).rounded() / 10
+    return (
+      (maxWidth * 10).rounded() / 10,
+      (maxLength * 10).rounded() / 10,
+      (maxHeight * 10).rounded() / 10
     )
   }
   
-  private func extractDimensionsFromData(_ data: CapturedRoomData) -> RoomDimensions {
-    return RoomDimensions(widthFt: 10.0, lengthFt: 12.0, heightFt: 9.0)
-  }
-  
-  func captureSession(_ session: RoomCaptureSession, didUpdate room: CapturedRoom) {
-    // Live updates during scan — RoomPlan handles the UI automatically
+  public func captureSession(_ session: RoomCaptureSession, didUpdate room: CapturedRoom) {
+    // Live updates during scan — RoomPlan handles UI automatically
   }
 }

@@ -1,7 +1,0 @@
-{
-  "name": "room-plan",
-  "platforms": ["ios"],
-  "ios": {
-    "modules": ["RoomPlanModule"]
-  }
-}
