@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import ScanScreen from './src/screens/ScanScreen';
 import ResultsScreen from './src/screens/ResultsScreen';
+import OnboardingScreen from './src/screens/OnboardingScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -39,6 +41,29 @@ class ErrorBoundary extends React.Component<{ children: React.ReactNode }, Error
 }
 
 export default function App() {
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
+
+  useEffect(() => {
+    AsyncStorage.getItem('hasSeenOnboarding').then((val) => {
+      setShowOnboarding(val !== 'true');
+      setOnboardingChecked(true);
+    });
+  }, []);
+
+  if (!onboardingChecked) {
+    // Blank screen while checking — avoids flash
+    return <View style={{ flex: 1, backgroundColor: '#0f3d2a' }} />;
+  }
+
+  if (showOnboarding) {
+    return (
+      <ErrorBoundary>
+        <OnboardingScreen onFinish={() => setShowOnboarding(false)} />
+      </ErrorBoundary>
+    );
+  }
+
   return (
     <ErrorBoundary>
       <NavigationContainer>
