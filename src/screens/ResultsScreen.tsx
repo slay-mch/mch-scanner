@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -27,9 +27,40 @@ export default function ResultsScreen() {
 
   const [activeTab, setActiveTab] = useState<ViewTab>('2D Plan');
   const [sending, setSending] = useState(false);
+  const [sendError, setSendError] = useState(false);
+
+  // If all dimensions are zero → incomplete scan
+  const isIncomplete =
+    dimensions.widthFt === 0 &&
+    dimensions.lengthFt === 0 &&
+    dimensions.heightFt === 0;
+
+  useEffect(() => {
+    if (isIncomplete) {
+      // Brief delay so the screen mounts before navigating back
+      const t = setTimeout(() => {
+        navigation.goBack();
+      }, 2500);
+      return () => clearTimeout(t);
+    }
+  }, [isIncomplete]);
+
+  if (isIncomplete) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.incompleteState}>
+          <Text style={styles.incompleteIcon}>🔄</Text>
+          <Text style={styles.incompleteTitle}>Scan Incomplete</Text>
+          <Text style={styles.incompleteBody}>Please try again — walk slowly around the room and cover all walls.</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const sendToMCH = async () => {
     setSending(true);
+    setSendError(false);
     try {
       const formData = new FormData();
       formData.append('width_ft', String(dimensions.widthFt));
@@ -52,11 +83,11 @@ export default function ResultsScreen() {
 
       const { scan_id } = await res.json();
 
-      // Build deep link URL — Session 6 will have the app open to quiz step 1
+      // Build deep link URL
       const url = `https://mch-agent-platform.vercel.app/quiz?source=scanner&scan_id=${scan_id}&width=${dimensions.widthFt}&length=${dimensions.lengthFt}&height=${dimensions.heightFt}`;
       await Linking.openURL(url);
     } catch (err) {
-      alert('Could not send scan. Please try again.');
+      setSendError(true);
     } finally {
       setSending(false);
     }
@@ -126,20 +157,31 @@ export default function ResultsScreen() {
         </View>
 
         <Text style={styles.note}>
-          \u2139\ufe0f These measurements are approximate. Verify with a tape measure before purchasing.
+          ℹ️ These measurements are approximate. Verify with a tape measure before purchasing.
         </Text>
       </ScrollView>
 
       <View style={styles.footer}>
-        <TouchableOpacity
-          style={[styles.primaryButton, sending && { opacity: 0.6 }]}
-          onPress={sendToMCH}
-          disabled={sending}
-        >
-          <Text style={styles.primaryButtonText}>
-            {sending ? 'Sending\u2026' : 'Send to MyClubHaus \u2192'}
-          </Text>
-        </TouchableOpacity>
+        {sendError ? (
+          <TouchableOpacity
+            style={styles.retryButton}
+            onPress={sendToMCH}
+          >
+            <Text style={styles.retryButtonText}>
+              Couldn't send scan — Tap to retry
+            </Text>
+          </TouchableOpacity>
+        ) : (
+          <TouchableOpacity
+            style={[styles.primaryButton, sending && { opacity: 0.6 }]}
+            onPress={sendToMCH}
+            disabled={sending}
+          >
+            <Text style={styles.primaryButtonText}>
+              {sending ? 'Sending…' : 'Send to MyClubHaus →'}
+            </Text>
+          </TouchableOpacity>
+        )}
         <TouchableOpacity style={styles.secondaryButton} onPress={() => navigation.goBack()}>
           <Text style={styles.secondaryButtonText}>Scan Again</Text>
         </TouchableOpacity>
@@ -158,7 +200,7 @@ function StatChip({ label, value }: StatChipProps) {
     <View style={chipStyles.chip}>
       <Text style={chipStyles.label}>{label}</Text>
       <Text style={chipStyles.value}>
-        {value > 0 ? `${value.toFixed(1)} ft` : '\u2014'}
+        {value > 0 ? `${value.toFixed(1)} ft` : '—'}
       </Text>
     </View>
   );
@@ -250,6 +292,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   primaryButtonText: { fontSize: 17, fontWeight: '700', color: '#0f1f14' },
+  retryButton: {
+    backgroundColor: '#7c2d12',
+    borderRadius: 12,
+    paddingVertical: 16,
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  retryButtonText: { fontSize: 16, fontWeight: '600', color: '#fca5a5' },
   secondaryButton: {
     borderRadius: 12,
     paddingVertical: 14,
@@ -258,4 +308,14 @@ const styles = StyleSheet.create({
     borderColor: '#1f3a26',
   },
   secondaryButtonText: { fontSize: 16, color: '#9ca3af' },
+  // Incomplete scan state
+  incompleteState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  incompleteIcon: { fontSize: 64, marginBottom: 24 },
+  incompleteTitle: { fontSize: 22, fontWeight: '700', color: '#f9fafb', marginBottom: 16 },
+  incompleteBody: { fontSize: 15, color: '#9ca3af', textAlign: 'center', lineHeight: 22 },
 });

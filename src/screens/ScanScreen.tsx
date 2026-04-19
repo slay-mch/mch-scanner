@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -12,36 +12,82 @@ import {
 import { useNavigation } from '@react-navigation/native';
 import RoomPlanModule, { RoomDimensions } from '../../modules/room-plan/index';
 
+const LONG_SCAN_THRESHOLD_MS = 3 * 60 * 1000; // 3 minutes
+
 export default function ScanScreen() {
   const navigation = useNavigation<any>();
+  const [sessionError, setSessionError] = useState<string | null>(null);
+  const [showSlowBanner, setShowSlowBanner] = useState(false);
+  const slowScanTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear timer on unmount
+  useEffect(() => {
+    return () => {
+      if (slowScanTimer.current) clearTimeout(slowScanTimer.current);
+    };
+  }, []);
 
   const startScan = () => {
+    setSessionError(null);
+    setShowSlowBanner(false);
+
     if (Platform.OS !== 'ios') {
       Alert.alert('iOS Only', 'Room scanning requires an iPhone with LiDAR.');
       return;
     }
 
     if (!RoomPlanModule) {
-      Alert.alert('Module Unavailable', 'RoomPlanModule native module is not registered. Check build logs.');
+      setSessionError('LiDAR not available on this device. Requires iPhone 12 Pro or later.');
       return;
     }
 
     const completeListener = RoomPlanModule.addListener('onScanComplete', (dims: RoomDimensions) => {
+      if (slowScanTimer.current) clearTimeout(slowScanTimer.current);
       completeListener?.remove?.();
       errorListener?.remove?.();
+      setShowSlowBanner(false);
       navigation.navigate('Results', { dimensions: dims });
     });
 
     const errorListener = RoomPlanModule.addListener('onScanError', (event: { message: string }) => {
+      if (slowScanTimer.current) clearTimeout(slowScanTimer.current);
       completeListener?.remove?.();
       errorListener?.remove?.();
-      if (event.message !== 'cancelled') {
+      setShowSlowBanner(false);
+      if (event.message === 'lidar_unavailable') {
+        setSessionError('LiDAR not available on this device. Requires iPhone 12 Pro or later.');
+      } else if (event.message !== 'cancelled') {
         Alert.alert('Scan Error', event.message || 'Something went wrong. Please try again.');
       }
     });
 
+    // Start slow-scan timer
+    slowScanTimer.current = setTimeout(() => {
+      setShowSlowBanner(true);
+    }, LONG_SCAN_THRESHOLD_MS);
+
     RoomPlanModule.startScan();
   };
+
+  // Full-screen error state (session failed to start)
+  if (sessionError) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <StatusBar barStyle="light-content" />
+        <View style={styles.errorState}>
+          <Text style={styles.errorStateIcon}>📵</Text>
+          <Text style={styles.errorStateTitle}>Device Not Supported</Text>
+          <Text style={styles.errorStateBody}>{sessionError}</Text>
+          <TouchableOpacity
+            style={styles.goBackButton}
+            onPress={() => setSessionError(null)}
+          >
+            <Text style={styles.goBackButtonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -55,6 +101,14 @@ export default function ScanScreen() {
       {!RoomPlanModule && (
         <View style={styles.warningBanner}>
           <Text style={styles.warningText}>⚠️ RoomPlanModule not registered — tap Start to see error details</Text>
+        </View>
+      )}
+
+      {showSlowBanner && (
+        <View style={styles.slowBanner}>
+          <Text style={styles.slowBannerText}>
+            ⏱ Scan taking longer than usual — try moving closer to walls
+          </Text>
         </View>
       )}
 
@@ -90,6 +144,14 @@ const styles = StyleSheet.create({
   tagline: { fontSize: 14, color: '#6b7280', marginTop: 2 },
   warningBanner: { backgroundColor: '#7c2d12', marginHorizontal: 16, borderRadius: 8, padding: 12, marginBottom: 8 },
   warningText: { color: '#fca5a5', fontSize: 12, textAlign: 'center' },
+  slowBanner: {
+    backgroundColor: '#78350f',
+    marginHorizontal: 16,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 8,
+  },
+  slowBannerText: { color: '#fde68a', fontSize: 13, textAlign: 'center' },
   content: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 32 },
   scanFrame: {
     alignItems: 'center',
@@ -114,4 +176,21 @@ const styles = StyleSheet.create({
   },
   scanButtonText: { fontSize: 17, fontWeight: '700', color: '#0f1f14' },
   disclaimer: { fontSize: 12, color: '#6b7280', textAlign: 'center' },
+  // Error state
+  errorState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 40,
+  },
+  errorStateIcon: { fontSize: 64, marginBottom: 24 },
+  errorStateTitle: { fontSize: 22, fontWeight: '700', color: '#f9fafb', marginBottom: 16, textAlign: 'center' },
+  errorStateBody: { fontSize: 15, color: '#9ca3af', textAlign: 'center', lineHeight: 22, marginBottom: 32 },
+  goBackButton: {
+    backgroundColor: '#1f3a26',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+  },
+  goBackButtonText: { fontSize: 16, fontWeight: '600', color: '#4ade80' },
 });
