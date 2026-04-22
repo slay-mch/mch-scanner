@@ -56,6 +56,10 @@ export default function ScanScreen() {
       setShowSlowBanner(false);
       if (event.message === 'lidar_unavailable') {
         setSessionError('LiDAR not available on this device. Requires iPhone 12 Pro or later.');
+      } else if (event.message === 'camera_denied') {
+        setSessionError('Camera access is required to scan your room. Please go to Settings > Privacy & Security > Camera and enable access for MCH Scanner.');
+      } else if (event.message === 'scan_not_started') {
+        setSessionError('The scan did not start. Please try again — make sure to allow camera access when prompted.');
       } else if (event.message !== 'cancelled') {
         Alert.alert('Scan Error', event.message || 'Something went wrong. Please try again.');
       }
