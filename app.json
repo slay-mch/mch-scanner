@@ -14,7 +14,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "co.myclubhaus.scanner",
-      "buildNumber": "8",
+      "buildNumber": "9",
       "deploymentTarget": "17.0",
       "infoPlist": {
         "NSCameraUsageDescription": "MCH Scanner uses your camera and LiDAR sensor to measure your room for golf simulator setup.",
