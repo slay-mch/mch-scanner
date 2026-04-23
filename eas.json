@@ -11,6 +11,7 @@
     },
     "production": {
       "ios": {
+        "image": "latest",
         "distribution": "store"
       }
     }
@@ -18,8 +19,8 @@
   "submit": {
     "production": {
       "ios": {
-        "appleId": "REPLACE_WITH_APPLE_ID_EMAIL",
-        "ascAppId": "REPLACE_WITH_APP_STORE_CONNECT_APP_ID",
+        "appleId": "dsh0007@auburn.edu",
+        "ascAppId": "6762568371",
         "appleTeamId": "6Q2HU64675"
       }
     }
