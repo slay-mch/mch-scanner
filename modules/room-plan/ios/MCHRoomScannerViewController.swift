@@ -9,6 +9,11 @@ import RoomPlan
   private var captureConfiguration = RoomCaptureSession.Configuration()
   private var isSessionRunning = false
 
+  /// Called from Objective-C before presenting this VC to gate on LiDAR support.
+  @objc public static func isLiDARSupported() -> Bool {
+    return RoomCaptureSession.isSupported
+  }
+
   public override func viewDidLoad() {
     super.viewDidLoad()
     view.backgroundColor = UIColor(red: 0.06, green: 0.12, blue: 0.08, alpha: 1.0)

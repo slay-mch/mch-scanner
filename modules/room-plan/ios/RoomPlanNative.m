@@ -44,6 +44,14 @@ RCT_EXPORT_METHOD(startScan) {
 }
 
 - (void)presentScannerVC {
+  // Gate on LiDAR availability BEFORE presenting any UI.
+  // Non-Pro iPhones lack LiDAR — RoomCaptureSession.isSupported returns false.
+  // Without this check the ViewController presents but shows a black void.
+  if (![MCHRoomScannerViewController isLiDARSupported]) {
+    [self sendEventWithName:@"onScanError" body:@{@"message": @"lidar_unavailable"}];
+    return;
+  }
+
   UIWindowScene *scene = nil;
   for (UIScene *s in [UIApplication sharedApplication].connectedScenes) {
     if ([s isKindOfClass:[UIWindowScene class]]) {
