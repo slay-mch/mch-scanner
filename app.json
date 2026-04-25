@@ -2,7 +2,7 @@
   "expo": {
     "name": "MCH Scanner",
     "slug": "mch-scanner",
-    "version": "1.2.1",
+    "version": "1.3.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -14,7 +14,7 @@
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "co.myclubhaus.scanner",
-      "buildNumber": "9",
+      "buildNumber": "10",
       "deploymentTarget": "17.0",
       "infoPlist": {
         "NSCameraUsageDescription": "MCH Scanner uses your camera and LiDAR sensor to measure your room for golf simulator setup.",
